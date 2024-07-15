@@ -1,17 +1,30 @@
 import axios from "axios"
-import { SearchType, Weather } from "../types"
+import { z } from 'zod'
+import { SearchType } from "../types"
 
 //TYPE GUARD O ASSERTION
-function isWeatherResponse(weather : unknown) : weather is Weather{
-    return (
-        Boolean(weather) &&
-        typeof weather === 'object' &&
-        typeof (weather as Weather).name === 'string' &&
-        typeof (weather as Weather).main.temp === 'number' &&
-        typeof (weather as Weather).main.temp_max === 'number' &&
-        typeof (weather as Weather).main.temp_min === 'number'
-    )
-}
+// function isWeatherResponse(weather : unknown) : weather is Weather{
+//     return (
+//         Boolean(weather) &&
+//         typeof weather === 'object' &&
+//         typeof (weather as Weather).name === 'string' &&
+//         typeof (weather as Weather).main.temp === 'number' &&
+//         typeof (weather as Weather).main.temp_max === 'number' &&
+//         typeof (weather as Weather).main.temp_min === 'number'
+//     )
+// }
+
+//Zod
+const Weather = z.object({
+    name: z.string(),
+    main: z.object({
+        temp: z.number(),
+        temp_max: z.number(),
+        temp_min: z.number()
+    })
+})
+
+type Weather = z.infer<typeof Weather>
 
 export default function useWheather() {
 
@@ -33,13 +46,19 @@ export default function useWheather() {
             //console.log(weatherResult.main.temp)
 
             //Type Guard
-            const {data: weatherResult} = await axios<Weather>(weatherUrl)
-            const result = isWeatherResponse(weatherResult)
+            // const {data: weatherResult} = await axios<Weather>(weatherUrl)
+            // const result = isWeatherResponse(weatherResult)
+            // if(result){
+            //     console.log(weatherResult.name)
+            // }
 
-            if(result){
-                console.log(weatherResult.name)
+            //Zod
+            const {data: weatherResult} = await axios(weatherUrl)
+            const result = Weather.safeParse(weatherResult)
+            if(result.success){
+                console.log(result.data.name)
+                console.log(result.data.main.temp)
             }
-            
             
 
         }catch(error){
